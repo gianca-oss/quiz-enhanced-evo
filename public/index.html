@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Quiz Assistant</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Ottimizzazione container principale per mobile */
+        .container {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 16px; /* Ridotto da 22px per più spazio */
+        }
+        
+        @media (max-width: 430px) {
+            .container {
+                padding: 0 12px; /* Ancora meno padding su mobile */
+            }
+        }
+        
+        .header {
+            text-align: center;
+            padding: 41px 0 27px;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        
+        .header h1 {
+            font-size: 41px;
+            font-weight: 600;
+            letter-spacing: -0.003em;
+            line-height: 1.08349;
+            margin-bottom: 14px;
+            color: #1d1d1f;
+        }
+        
+        .header p {
+            font-size: 18px;
+            font-weight: 400;
+            letter-spacing: 0.011em;
+            line-height: 1.381;
+            color: #86868b;
+        }
+        
+        .main-content {
+            padding: 27px 0;
+        }
+        
+        .section {
+            margin-bottom: 27px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.007em;
+            line-height: 1.14286;
+            margin-bottom: 14px;
+            color: #1d1d1f;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 1px solid #d2d2d7;
+            border-radius: 15px;
+            padding: 34px 27px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #fbfbfd;
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            background: #f5f5f7;
+            border-color: #86868b;
+        }
+        
+        .upload-area:active {
+            transform: scale(0.995);
+        }
+        
+        .upload-area.loaded {
+            background: #ffffff;
+            border-color: #86868b;
+        }
+        
+        .upload-label {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.011em;
+            line-height: 1.381;
+            color: #1d1d1f;
+            margin-bottom: 7px;
+        }
+        
+        .upload-sublabel {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            line-height: 1.47059;
+            color: #86868b;
+        }
+        
+        .status-text {
+            font-size: 14px;
+            font-weight: 400;
+            color: #86868b;
+            margin-top: 10px;
+        }
+        
+        .status-text.active {
+            color: #1d1d1f;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            padding: 20px 0;
+            border-top: 1px solid #d2d2d7;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            line-height: 1.17648;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            min-width: 119px;
+            text-decoration: none;
+            font-family: inherit;
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-primary {
+            background: #000000;
+            color: #ffffff;
+        }
+        
+        .btn-primary:hover {
+            background: #1d1d1f;
+        }
+        
+        .btn-secondary {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #d2d2d7;
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f5f7;
+            border-color: #86868b;
+        }
+        
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .btn:disabled:hover {
+            background: #000000;
+        }
+        
+        .btn:disabled:active {
+            transform: scale(1);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 34px 0;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            width: 27px;
+            height: 27px;
+            border: 2px solid #d2d2d7;
+            border-top-color: #000000;
+            border-radius: 50%;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .loading-text {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            color: #86868b;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            padding: 27px 0;
+            border-top: 1px solid #d2d2d7;
+        }
+        
+        .result-item {
+            background: #fbfbfd;
+            border: 1px solid #d2d2d7;
+            border-radius: 15px;
+            padding: 24px;
+            margin-bottom: 14px;
+        }
+        
+        .result-header {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.011em;
+            color: #1d1d1f;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        
+        .result-content {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            line-height: 1.47059;
+            color: #1d1d1f;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* ===== STILI CENTRALIZZATI PER TABELLE QUIZ - STILE APPLE ===== */
+        
+        /* Tabella principale dei risultati quiz - 3 colonne */
+        .quiz-results-table {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        /* Header tabella - stile Apple minimale */
+        .quiz-results-table thead {
+            background: #f5f5f7;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        
+        .quiz-results-table th {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .quiz-results-table th:first-child {
+            width: 15%;
+            text-align: center;
+        }
+        
+        .quiz-results-table th:nth-child(2) {
+            width: 35%;
+        }
+        
+        .quiz-results-table th:nth-child(3) {
+            width: 50%;
+        }
+        
+        /* Righe tabella */
+        .quiz-results-table tbody tr {
+            border-bottom: 1px solid #f0f0f2;
+        }
+        
+        .quiz-results-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .quiz-results-table tbody tr:hover {
+            background: #fafafa;
+        }
+        
+        /* Celle tabella */
+        .quiz-results-table td {
+            padding: 12px;
+            text-align: center;
+        }
+        
+        /* Colonna numero domanda */
+        .question-number {
+            font-weight: 500;
+            color: #86868b;
+            font-size: 13px;
+        }
+        
+        /* Colonna lettera risposta */
+        .answer-letter {
+            font-weight: 700;
+            font-size: 18px;
+            color: #1d1d1f;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
+        
+        /* Colonna accuratezza */
+        .accuracy-percentage {
+            font-weight: 500;
+            font-size: 13px;
+            color: #86868b;
+        }
+        
+        /* Colori per diversi livelli di accuratezza */
+        .accuracy-percentage:contains("9") { /* 90-100% */
+            color: #34c759;
+            font-weight: 600;
+        }
+        
+        .accuracy-percentage:contains("8") { /* 80-89% */
+            color: #30d158;
+        }
+        
+        .accuracy-percentage:contains("7") { /* 70-79% */
+            color: #ff9500;
+        }
+        
+        .accuracy-percentage:contains("6") { /* 60-69% */
+            color: #ff9500;
+        }
+        
+        /* Sotto 60% */
+        td.accuracy-percentage {
+            color: #ff3b30;
+        }
+        
+        /* Stili per analisi dettagliata */
+        .question-analysis {
+            margin: 24px 0;
+            padding: 20px;
+            background: #fbfbfd;
+            border-radius: 10px;
+            border: 1px solid #f0f0f2;
+        }
+        
+        .question-analysis h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+        }
+        
+        .question-text {
+            font-size: 14px;
+            color: #515154;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border-left: 3px solid #007aff;
+        }
+        
+        .answer-explanation {
+            font-size: 14px;
+            color: #1d1d1f;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .answer-explanation strong {
+            color: #007aff;
+            font-weight: 600;
+        }
+        
+        .source-info {
+            font-size: 12px;
+            color: #86868b;
+            font-style: italic;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f0f0f2;
+        }
+        
+        /* Retrocompatibilità per tabelle senza classi (fallback) */
+        .result-content table:not(.quiz-results-table) {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 14px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .result-content table:not(.quiz-results-table) th {
+            background: #f5f5f7;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 11px;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .result-content table:not(.quiz-results-table) td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f2;
+            text-align: center;
+        }
+        
+        /* Media queries per dispositivi mobili */
+        @media (max-width: 430px) { /* iPhone 15 Pro e simili */
+            .quiz-results-table {
+                max-width: calc(100vw - 32px);
+                font-size: 13px;
+            }
+            
+            .quiz-results-table th {
+                padding: 10px 6px;
+                font-size: 10px;
+            }
+            
+            .quiz-results-table td {
+                padding: 10px 6px;
+            }
+            
+            .question-number {
+                font-size: 12px;
+            }
+            
+            .answer-letter {
+                font-size: 16px;
+            }
+            
+            .accuracy-percentage {
+                font-size: 12px;
+            }
+            
+            .question-analysis {
+                padding: 16px;
+                margin: 20px 0;
+            }
+            
+            .question-analysis h4 {
+                font-size: 15px;
+            }
+            
+            .question-text,
+            .answer-explanation {
+                font-size: 13px;
+            }
+            
+            .source-info {
+                font-size: 11px;
+            }
+        }
+        
+        @media (max-width: 375px) { /* iPhone SE e dispositivi più piccoli */
+            .quiz-results-table {
+                max-width: calc(100vw - 28px);
+            }
+            
+            .answer-letter {
+                font-size: 15px;
+            }
+        }
+        
+        /* ===== FINE STILI TABELLE QUIZ ===== */
+        
+        /* Riepilogo risposte rapide */
+        .quick-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .quick-summary h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+        
+        .quick-summary p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        
+        /* Griglia risposte veloci - Responsive */
+        .quick-answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 8px;
+            margin: 17px 0;
+            padding: 14px;
+            background: #f5f5f7;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 430px) {
+            .quick-answers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(51px, 1fr));
+                gap: 7px;
+                padding: 10px;
+                margin: 14px 0;
+            }
+        }
+        
+        .quick-answer-item {
+            text-align: center;
+            padding: 8px 7px;
+            background: white;
+            border-radius: 7px;
+            border: 1px solid #d2d2d7;
+            transition: transform 0.2s ease;
+        }
+        
+        .quick-answer-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quick-answer-item .question-num {
+            font-size: 9px;
+            color: #86868b;
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+        
+        .quick-answer-item .answer-letter {
+            font-size: 17px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
+        
+        @media (max-width: 430px) {
+            .quick-answer-item {
+                padding: 7px 5px;
+            }
+            
+            .quick-answer-item .question-num {
+                font-size: 8px;
+            }
+            
+            .quick-answer-item .answer-letter {
+                font-size: 15px;
+            }
+        }
+        
+        .error-message {
+            background: #fbfbfd;
+            border: 1px solid #d2d2d7;
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .error-title {
+            font-size: 21px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+        }
+        
+        .error-content {
+            font-size: 17px;
+            line-height: 1.47059;
+            color: #86868b;
+        }
+        
+        .error-list {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+        
+        .error-list li {
+            margin-bottom: 8px;
+            color: #86868b;
+        }
+        
+        .error-note {
+            font-size: 14px;
+            color: #86868b;
+            margin-top: 16px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 0 60px;
+            border-top: 1px solid #d2d2d7;
+            color: #86868b;
+            font-size: 14px;
+            letter-spacing: -0.016em;
+            line-height: 1.42859;
+        }
+        
+        .footer a {
+            color: #515154;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .info-box {
+            background: #f5f5f7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: #86868b;
+            text-align: center;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 32px 0 24px;
+            }
+            
+            .header h1 {
+                font-size: 36px;
+            }
+            
+            .header p {
+                font-size: 19px;
+            }
+            
+            .section-title {
+                font-size: 24px;
+            }
+            
+            .upload-area {
+                padding: 28px 20px;
+            }
+            
+            .upload-label {
+                font-size: 19px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .quick-answers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            }
+        }
+        
+        /* Drag and drop states */
+        .upload-area.dragover {
+            background: #f5f5f7;
+            border-color: #86868b;
+        }
+        
+        /* Focus states for accessibility */
+        .btn:focus-visible {
+            outline: 2px solid #0071e3;
+            outline-offset: 2px;
+        }
+        
+        .upload-area:focus-visible {
+            outline: 2px solid #0071e3;
+            outline-offset: 2px;
+        }
+        
+        /* Nasconde l'analisi dettagliata di default */
+        .detailed-analysis {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #d2d2d7;
+            display: none;
+        }
+        
+        .show-details-btn {
+            margin-top: 16px;
+            padding: 8px 16px;
+            background: #f5f5f7;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #86868b;
+        }
+        
+        .show-details-btn:hover {
+            background: #e8e8ed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Quiz Assistant</h1>
+            <p>Analisi intelligente basata su corso completo</p>
+        </header>
+        
+        <main class="main-content">
+            <!-- Images Section -->
+            <section class="section">
+                <h2 class="section-title">Carica le foto del quiz</h2>
+                <div id="imgUploadArea" class="upload-area" tabindex="0" role="button" aria-label="Carica immagini del quiz">
+                    <input type="file" id="imgInput" accept="image/*" multiple aria-hidden="true">
+                    <div class="upload-label" id="imgLabel">Seleziona immagini</div>
+                    <div class="upload-sublabel" id="imgSublabel">Puoi selezionare più file contemporaneamente</div>
+                    <div class="status-text" id="imgStatus"></div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Actions -->
+        <div class="actions">
+            <button id="analyzeBtn" class="btn btn-primary" disabled>
+                Analizza
+            </button>
+            <button id="clearBtn" class="btn btn-secondary">
+                Cancella
+            </button>
+        </div>
+        
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Analisi in corso</div>
+        </div>
+        
+        <!-- Results -->
+        <div id="results" class="results">
+            <div id="resultsContent"></div>
+        </div>
+        
+        <footer class="footer">
+            <p>Powered by <a href="https://anthropic.com" target="_blank">Claude</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let images = [];
+        
+        // DOM Elements
+        const imgUploadArea = document.getElementById('imgUploadArea');
+        const imgInput = document.getElementById('imgInput');
+        const imgLabel = document.getElementById('imgLabel');
+        const imgSublabel = document.getElementById('imgSublabel');
+        const imgStatus = document.getElementById('imgStatus');
+        
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const resultsContent = document.getElementById('resultsContent');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Click handlers
+            imgUploadArea.addEventListener('click', () => imgInput.click());
+            
+            // Keyboard accessibility
+            imgUploadArea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    imgInput.click();
+                }
+            });
+            
+            // File input handlers
+            imgInput.addEventListener('change', handleImages);
+            
+            // Button handlers
+            analyzeBtn.addEventListener('click', analyze);
+            clearBtn.addEventListener('click', clearAll);
+            
+            // Drag and drop
+            setupDragAndDrop(imgUploadArea, handleImagesDrop);
+        });
+        
+        // Drag and drop setup
+        function setupDragAndDrop(element, handler) {
+            element.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                element.classList.add('dragover');
+            });
+            
+            element.addEventListener('dragleave', () => {
+                element.classList.remove('dragover');
+            });
+            
+            element.addEventListener('drop', (e) => {
+                e.preventDefault();
+                element.classList.remove('dragover');
+                handler(e.dataTransfer.files);
+            });
+        }
+        
+        // Handle images drop
+        function handleImagesDrop(files) {
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length > 0) {
+                imgInput.files = files;
+                handleImages({ target: { files: imageFiles } });
+            }
+        }
+        
+        // Handle images
+        async function handleImages(e) {
+            const files = Array.from(e.target.files);
+            
+            images = [];
+            imgLabel.textContent = 'Elaborazione';
+            imgSublabel.textContent = 'Compressione immagini';
+            imgStatus.textContent = '';
+            
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (!file.type.startsWith('image/')) continue;
+                    
+                    imgStatus.textContent = `Immagine ${i + 1} di ${files.length}`;
+                    
+                    const compressedBase64 = await compressImage(file);
+                    images.push(compressedBase64);
+                }
+                
+                if (images.length > 0) {
+                    imgUploadArea.classList.add('loaded');
+                    imgLabel.textContent = `${images.length} ${images.length === 1 ? 'immagine' : 'immagini'}`;
+                    imgSublabel.textContent = 'Pronte per l\'analisi';
+                    imgStatus.textContent = '';
+                }
+            } catch (err) {
+                imgLabel.textContent = 'Errore';
+                imgSublabel.textContent = err.message;
+                images = [];
+            }
+            
+            checkReady();
+        }
+        
+        // Compress image
+        async function compressImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            
+                            let width = img.width;
+                            let height = img.height;
+                            const maxDim = 1200;
+                            
+                            if (width > height && width > maxDim) {
+                                height = (maxDim / width) * height;
+                                width = maxDim;
+                            } else if (height > maxDim) {
+                                width = (maxDim / height) * width;
+                                height = maxDim;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, width, height);
+                            ctx.drawImage(img, 0, 0, width, height);
+                            
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                            const base64 = dataUrl.split(',')[1];
+                            
+                            resolve(base64);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Impossibile caricare l\'immagine'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('Errore lettura file'));
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Clear all
+        function clearAll() {
+            // Clear images
+            images = [];
+            imgUploadArea.classList.remove('loaded');
+            imgLabel.textContent = 'Seleziona immagini';
+            imgSublabel.textContent = 'Puoi selezionare più file contemporaneamente';
+            imgStatus.textContent = '';
+            imgInput.value = '';
+            
+            // Clear results
+            results.style.display = 'none';
+            resultsContent.innerHTML = '';
+            
+            checkReady();
+        }
+        
+        // Check if ready
+        function checkReady() {
+            const hasImages = images && images.length > 0;
+            analyzeBtn.disabled = !hasImages;
+        }
+        
+        // Estrae le risposte dal testo HTML
+        function extractAnswersFromHtml(htmlText) {
+            const answers = [];
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const rows = doc.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 3) {
+                    const questionNum = cells[0].textContent.trim();
+                    const answer = cells[1].textContent.trim().toUpperCase();
+                    const accuracy = cells[2].textContent.trim();
+                    if (questionNum && ['A', 'B', 'C', 'D'].includes(answer)) {
+                        answers.push({
+                            number: questionNum,
+                            answer: answer,
+                            accuracy: accuracy
+                        });
+                    }
+                } else if (cells.length >= 2) {
+                    // Fallback per tabelle a 2 colonne
+                    const questionNum = cells[0].textContent.trim();
+                    const answer = cells[1].textContent.trim().toUpperCase();
+                    if (questionNum && ['A', 'B', 'C', 'D'].includes(answer)) {
+                        answers.push({
+                            number: questionNum,
+                            answer: answer,
+                            accuracy: 'N/A'
+                        });
+                    }
+                }
+            });
+            
+            return answers;
+        }
+        
+        // Crea tabella sintetica
+        function createSyntheticTable(answers) {
+            if (!answers || answers.length === 0) return '';
+            
+            let tableHtml = `
+                <table class="quiz-results-table">
+                    <thead>
+                        <tr>
+                            <th>Domanda</th>
+                            <th>Risposta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            answers.forEach(item => {
+                tableHtml += `
+                    <tr>
+                        <td class="question-number">${item.number}</td>
+                        <td class="answer-letter">${item.answer}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            return tableHtml;
+        }
+        
+        // Crea riepilogo veloce
+        function createQuickSummary(answers) {
+            if (!answers || answers.length === 0) return '';
+            
+            let summaryHtml = `
+                <div class="quick-summary">
+                    <h3>Riepilogo Risposte</h3>
+                    <p>${answers.length} domande analizzate</p>
+                </div>
+                <div class="quick-answers-grid">
+            `;
+            
+            answers.forEach(item => {
+                summaryHtml += `
+                    <div class="quick-answer-item">
+                        <div class="question-num">Q${item.number}</div>
+                        <div class="answer-letter">${item.answer}</div>
+                    </div>
+                `;
+            });
+            
+            summaryHtml += `</div>`;
+            
+            return summaryHtml;
+        }
+        
+        // Analyze
+        async function analyze() {
+            if (images.length === 0) return;
+            
+            loading.classList.add('show');
+            results.style.display = 'none';
+            resultsContent.innerHTML = '';
+            
+            try {
+                let allAnswers = [];
+                
+                for (let i = 0; i < images.length; i++) {
+                    // Prepara solo l'immagine per l'analisi
+                    const requestContent = [
+                        {
+                            type: "image",
+                            source: {
+                                type: "base64",
+                                media_type: "image/jpeg",
+                                data: images[i]
+                            }
+                        }
+                    ];
+                    
+                    // Call API through serverless function
+                    const endpoint = '/api/analyze-with-docs'; // Endpoint con supporto documenti completo
+                    
+                    console.log('Invio richiesta a:', endpoint);
+                    console.log('Dimensione immagine:', images[i].length, 'caratteri');
+                    
+                    const requestBody = {
+                        model: "claude-3-haiku-20240307",
+                        max_tokens: 4000,
+                        messages: [{
+                            role: "user",
+                            content: requestContent
+                        }]
+                    };
+                    
+                    console.log('Request body:', JSON.stringify(requestBody).substring(0, 200) + '...');
+                    
+                    const response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    if (!response.ok) {
+                        let errorMessage = 'Errore sconosciuto';
+                        let errorDetails = null;
+                        
+                        try {
+                            const errorData = await response.json();
+                            console.error('Errore dettagliato dal server:', errorData);
+                            errorMessage = errorData.error || errorData.message || `Errore HTTP ${response.status}`;
+                            errorDetails = errorData.debug || errorData.details;
+                        } catch (e) {
+                            console.error('Impossibile parsare errore:', e);
+                            // Prova a leggere come testo
+                            try {
+                                const errorText = await response.text();
+                                console.error('Risposta errore (testo):', errorText);
+                                errorMessage = `Errore HTTP ${response.status}: ${errorText.substring(0, 100)}`;
+                            } catch (textError) {
+                                errorMessage = `Errore HTTP ${response.status}`;
+                            }
+                        }
+                        
+                        if (errorDetails) {
+                            console.error('Debug details:', errorDetails);
+                        }
+                        
+                        throw new Error(errorMessage);
+                    }
+                    
+                    const data = await response.json();
+                    const result = data.content[0].text;
+                    
+                    // Estrai le risposte dal risultato
+                    const extractedAnswers = extractAnswersFromHtml(result);
+                    if (extractedAnswers.length > 0) {
+                        allAnswers = allAnswers.concat(extractedAnswers);
+                    }
+                    
+                    // Mostra i risultati per questa immagine
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    // Header
+                    const resultHeader = document.createElement('div');
+                    resultHeader.className = 'result-header';
+                    resultHeader.textContent = `Analisi ${i + 1} di ${images.length}`;
+                    
+                    // Content - mostra direttamente il risultato HTML
+                    const resultContent = document.createElement('div');
+                    resultContent.className = 'result-content';
+                    resultContent.innerHTML = result;
+                    
+                    // Costruisci il risultato
+                    resultItem.appendChild(resultHeader);
+                    resultItem.appendChild(resultContent);
+                    
+                    // Aggiungi metadati se disponibili
+                    const metadata = data.metadata;
+                    if (metadata) {
+                        const metadataDiv = document.createElement('div');
+                        metadataDiv.style.cssText = 'font-size: 12px; color: #86868b; margin-top: 12px; padding-top: 12px; border-top: 1px solid #d2d2d7;';
+                        metadataDiv.innerHTML = `
+                            Ricerca: ${metadata.chunksSearched || 0} sezioni • 
+                            ${metadata.pagesReferenced || 0} pagine • 
+                            ${metadata.processingMethod === 'semantic-search' ? 'Analisi semantica' : 'Ricerca standard'}
+                        `;
+                        resultItem.appendChild(metadataDiv);
+                    }
+                    
+                    resultsContent.appendChild(resultItem);
+                }
+                
+                results.style.display = 'block';
+                results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            } catch (err) {
+                console.error('Errore dettagliato:', err);
+                
+                let errorMessage = 'Si è verificato un errore';
+                
+                if (err.message) {
+                    errorMessage = err.message;
+                } else if (typeof err === 'string') {
+                    errorMessage = err;
+                } else {
+                    errorMessage = 'Errore sconosciuto durante l\'analisi';
+                }
+                
+                resultsContent.innerHTML = `
+                    <div class="error-message">
+                        <div class="error-title">Errore durante l'analisi</div>
+                        <div class="error-content">
+                            ${errorMessage}
+                            <ul class="error-list">
+                                <li>Verifica che l'API key sia configurata correttamente</li>
+                                <li>Assicurati che le immagini siano leggibili</li>
+                                <li>Controlla i crediti disponibili su Anthropic</li>
+                            </ul>
+                            <div class="error-note">Per maggiori dettagli, apri la console del browser (F12)</div>
+                        </div>
+                    </div>
+                `;
+                results.style.display = 'block';
+                
+            } finally {
+                loading.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>
